@@ -22,7 +22,7 @@ runs:
       with:
         python-version: 3.x
     - name: Clone moodle uploader
-      run: git clone https://github.com/RokasPuzonas/ktu-moodle-assignment-upload -b v1.0.1
+      run: git clone https://github.com/RokasPuzonas/ktu-moodle-assignment-upload -b v1.0.2
       shell: "bash"
     - name: Setup Geckodriver
       uses: browser-actions/setup-geckodriver@v0.0.0
