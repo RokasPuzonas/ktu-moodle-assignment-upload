@@ -1,0 +1,45 @@
+name: "KTU Moodle Assignment Uploader"
+description: "Upload file to an aassignment in KTU Moodle"
+author: "Rokas Puzonas"
+
+inputs:
+  assignment-id:
+    description: "Assignment id of the assignment where you want to upload the file"
+  target-filename:
+    description: "Path to file which will be uploaded"
+  upload-filename:
+    description: "Name of uploaded file in moodle system"
+  ktu-username:
+    description: "KTU student username"
+  ktu-password:
+    description: "KTU student password"
+
+runs:
+  using: "composite"
+  steps:
+    - name: Setup Python
+      uses: actions/setup-python@v2.3.1
+      with:
+        python-version: 3.x
+    - name: Clone moodle uploader
+      run: git clone https://github.com/RokasPuzonas/ktu-moodle-assignment-upload -b v1.0.0
+      shell: "bash"
+    - name: Setup Geckodriver
+      uses: browser-actions/setup-geckodriver@v0.0.0
+    - name: Setup moodle uploader
+      run: |
+        cd ktu-moodle-assignment-upload
+        python -m venv venv
+        source venv/bin/activate
+        pip install -r requirements.txt
+      shell: "bash"
+    - name: Run moodle uploader
+      run: |
+        cd ktu-moodle-assignment-upload
+        source venv/bin/activate
+        ./main.py ${{ inputs.assignment-id }} ../${{ inputs.target-filename }} ${{ inputs.upload-filename }}
+      shell: "bash"
+      env:
+        KTU_USERNAME: ${{ inputs.ktu-username }}
+        KTU_PASSWORD: ${{ inputs.ktu-password }}
+
