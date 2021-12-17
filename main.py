@@ -1,38 +1,41 @@
 #!/usr/bin/env python
 from selenium import webdriver
+import click
 from selenium.webdriver.firefox.options import Options
 from selenium.webdriver.common.by import By
 from dotenv import load_dotenv
 import time
-import os
 from os import path
 
+load_dotenv()
+
 LOGIN_URL = "https://moodle.ktu.edu/login/index.php"
-EDIT_ASSIGNMENT_URL = "https://moodle.ktu.edu/mod/assign/view.php?id=1499&action=editsubmission"
+EDIT_ASSIGNMENT_URL = "https://moodle.ktu.edu/mod/assign/view.php?id={id}&action=editsubmission"
 
-moodle_filename = "IF-1-1_Rokas_Puzonas.pdf"
-filename = "report.pdf"
-
-def main():
-    load_dotenv()
-
+def create_driver():
     options = Options()
-    # options.headless = True
-    driver = webdriver.Firefox(options=options)
+    options.headless = True
+    return webdriver.Firefox(options=options)
 
+def login(driver, username, password):
     driver.get(LOGIN_URL)
-    driver.find_element(By.ID, "username").send_keys(os.environ["KTU_USERNAME"])
-    driver.find_element(By.ID, "password").send_keys(os.environ["KTU_PASSWORD"])
+
+    driver.find_element(By.ID, "username").send_keys(username)
+    driver.find_element(By.ID, "password").send_keys(password)
     driver.find_element(By.XPATH, "//input[@type='submit']").click()
     time.sleep(1)
 
     driver.find_element(By.ID, "yesbutton").click()
     time.sleep(1)
 
-    driver.get(EDIT_ASSIGNMENT_URL)
+def upload_file_to_assignment(driver, assignment, filename, upload_filename):
+    if not upload_filename:
+        upload_filename = path.basename(filename)
+
+    driver.get(EDIT_ASSIGNMENT_URL.format(id=assignment))
     time.sleep(1)
 
-    file = driver.find_element(By.XPATH, f"//*[text()='{moodle_filename}']")
+    file = driver.find_element(By.XPATH, f"//*[text()='{upload_filename}']")
     if file:
         file.click()
         time.sleep(1)
@@ -45,11 +48,23 @@ def main():
     time.sleep(1)
 
     driver.find_element(By.XPATH, "//input[@type='file']").send_keys(path.abspath(filename))
-    driver.find_element(By.XPATH, "//input[@name='title']").send_keys(moodle_filename)
+    driver.find_element(By.XPATH, "//input[@name='title']").send_keys(upload_filename)
     driver.find_element(By.CLASS_NAME, "fp-upload-btn").click()
     time.sleep(1)
 
     driver.find_element(By.ID, "id_submitbutton").click()
+
+@click.command()
+@click.argument("assignment")
+@click.argument("filename", type=click.Path(exists=True, readable=True, dir_okay=False))
+@click.argument("upload_filename", required=False, type=click.Path())
+@click.option("--username", "-u", required=True, envvar="KTU_USERNAME")
+@click.option("--password", "-p", required=True, envvar="KTU_PASSWORD")
+def main(assignment, filename, upload_filename, username, password):
+    driver = create_driver()
+
+    login(driver, username, password)
+    upload_file_to_assignment(driver, assignment, filename, upload_filename)
 
     driver.close()
 
