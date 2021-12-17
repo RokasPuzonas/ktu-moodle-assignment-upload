@@ -22,24 +22,22 @@ runs:
       with:
         python-version: 3.x
     - name: Clone moodle uploader
-      run: git clone https://github.com/RokasPuzonas/ktu-moodle-assignment-upload -b v1.0.0
+      run: git clone https://github.com/RokasPuzonas/ktu-moodle-assignment-upload -b v1.0.1
       shell: "bash"
     - name: Setup Geckodriver
       uses: browser-actions/setup-geckodriver@v0.0.0
-    - name: Setup moodle uploader
+    - name: Upload file to KTU Moodle
       run: |
         cd ktu-moodle-assignment-upload
         python -m venv venv
         source venv/bin/activate
         pip install -r requirements.txt
-      shell: "bash"
-    - name: Run moodle uploader
-      run: |
-        cd ktu-moodle-assignment-upload
-        source venv/bin/activate
         ./main.py ${{ inputs.assignment-id }} ../${{ inputs.target-filename }} ${{ inputs.upload-filename }}
-      shell: "bash"
       env:
         KTU_USERNAME: ${{ inputs.ktu-username }}
         KTU_PASSWORD: ${{ inputs.ktu-password }}
+      shell: "bash"
+    - name: Cleanup
+      run: rm -rf ktu-moodle-assignment-upload 
+      shell: "bash"
 
